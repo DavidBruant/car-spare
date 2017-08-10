@@ -4,7 +4,7 @@ function isUsageRateError(err){
 }
 
 const RETRY_MINIMUM_DELAY = 25;
-const MAX_PENDING = 8;
+const MAX_PENDING = 3;
 
 const queueByAuth = new WeakMap();
 

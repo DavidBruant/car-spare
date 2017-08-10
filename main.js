@@ -3,7 +3,7 @@ import readline from 'readline';
 import {promisify} from 'util';
 
 import authorize from './authorize';
-import listFilesRec from './makeGDriveFolderBackup';
+import makeGDriveFolderBackup from './makeGDriveFolderBackup';
 
 const readFile = promisify(fs.readFile);
 
@@ -23,7 +23,7 @@ readFile('client_secret.json')
     })
     .then(folderId => {
         console.time('yo')
-        return listFilesRec(auth, folderId)
+        return makeGDriveFolderBackup(auth, folderId)
     })
 
 })

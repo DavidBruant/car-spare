@@ -9,7 +9,7 @@ const readFile = promisify(fs.readFile);
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/drive-nodejs-quickstart.json
-const SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly'];
+const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
 const TOKEN_PATH = './drive-nodejs-quickstart.json';
 
 
