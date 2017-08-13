@@ -9,6 +9,10 @@ import withExponentialBackoff from './withExponentialBackoff';
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
 const GOOGLE_DOC_MIME_TYPE = 'application/vnd.google-apps.document';
 const GOOGLE_SPREADSHEET_MIME_TYPE = 'application/vnd.google-apps.spreadsheet';
+const GOOGLE_DRAWING_MIME_TYPE = 'application/vnd.google-apps.drawing';
+const GOOGLE_PRESENTATION_MIME_TYPE = 'application/vnd.google-apps.presentation';
+const GOOGLE_SCRIPT_MIME_TYPE = 'application/vnd.google-apps.script';
+
 
 const mkdir = promisify(fs.mkdir);
 const unlink = promisify(fs.unlink);
@@ -22,32 +26,11 @@ function listFolderFiles(auth, folderId) {
 }
 
 
-
-function listFilesRec(auth, rootFolderId){
-    const listFolderFilesWithBackoff = withExponentialBackoff(listFolderFiles, auth);
-
-    return listFolderFilesWithBackoff(auth, rootFolderId)
-    .then(({files}) => {
-        console.log(
-            '\t', rootFolderId,
-            '\n'+(files.map(f => `- ${f.name} - ${f.mimeType}`).join('\n'))
-        )
-        
-        return Promise.all(
-            files
-            .filter(f => f.mimeType === GOOGLE_DRIVE_FOLDER_MIME_TYPE)
-            .map(f => listFilesRec(auth, f.id))
-        )
-    })
-}
-
 function exportToFile(auth, fileId, filename, mimeType){
     return new Promise((resolve, reject) => {
         var dest = fs.createWriteStream(filename);
         drive.files.export({ auth, fileId, mimeType }, (err) => {
             if(err){
-                console.error('drive.files.export err', err);
-                // TODO retry if isUsageRateError
                 reject(err);
             }
         })
@@ -66,8 +49,6 @@ function downloadToFile(auth, fileId, filename){
         var dest = fs.createWriteStream(filename);
         drive.files.get({ auth, fileId, alt: 'media' }, (err) => {
             if(err){
-                console.error('drive.files.export err', err);
-                // TODO retry if isUsageRateError
                 reject(err);
             }
         })
@@ -81,52 +62,70 @@ function downloadToFile(auth, fileId, filename){
     });
 }
 
+const listFolderFilesWithBackoffAndRetry = withExponentialBackoff(listFolderFiles);
+const exportToFileWithBackoffAndRetry = withExponentialBackoff(exportToFile);
+const downloadToFileWithBackoffAndRetry = withExponentialBackoff(downloadToFile);
+
 export default function makeGDriveFolderBackup(auth, gDriveFolderId, dirPath = './tmp'){
     // verify the dir exists
     // verify it's a git repo; make it so if not https://github.com/dtc-innovation/garagiste/issues/3 
 
-    const listFolderFilesWithBackoff = withExponentialBackoff(listFolderFiles, auth);
-
-    return listFolderFilesWithBackoff(auth, gDriveFolderId)
+    return listFolderFilesWithBackoffAndRetry(auth, gDriveFolderId)
     .then(({files}) => {
-        console.log(
-            '\t', gDriveFolderId,
-            '\n'+(files.map(f => `- ${f.name} - ${f.mimeType}`).join('\n'))
-        )
-        
         return Promise.all(
-            files
-            .map(f => {
-                const correspondingFilename = path.join(
+            files.map(f => {
+
+                const localFilename = path.join(
                     dirPath, 
                     f.name.replace(new RegExp(path.sep, 'g'), '_')
                 )
 
-                switch(f.mimeType){
-                    case GOOGLE_DRIVE_FOLDER_MIME_TYPE: {
-                        return mkdir(correspondingFilename)
-                        .then(() => makeGDriveFolderBackup(auth, f.id, correspondingFilename) );
+                console.log('Start', f.name, dirPath);
+
+                (() => {
+                    switch(f.mimeType){
+                        case GOOGLE_DRIVE_FOLDER_MIME_TYPE: {
+                            return mkdir(localFilename)
+                            .then(() => makeGDriveFolderBackup(auth, f.id, localFilename) )
+                        }
+                        case GOOGLE_DOC_MIME_TYPE: {
+                            return exportToFileWithBackoffAndRetry(
+                                auth, f.id, `${localFilename}.odt`, 'application/vnd.oasis.opendocument.text'
+                            )
+                        }
+                        case GOOGLE_SPREADSHEET_MIME_TYPE: {
+                            return exportToFileWithBackoffAndRetry(
+                                auth, f.id, `${localFilename}.ods`, 'application/x-vnd.oasis.opendocument.spreadsheet'
+                            )
+                        }
+                        case GOOGLE_DRAWING_MIME_TYPE: {
+                            return exportToFileWithBackoffAndRetry(
+                                auth, f.id, `${localFilename}.svg`, 'image/svg+xml'
+                            )
+                        }
+                        case GOOGLE_PRESENTATION_MIME_TYPE: {
+                            return exportToFileWithBackoffAndRetry(
+                                auth, f.id, `${localFilename}.odp`, 'application/vnd.oasis.opendocument.presentation'
+                            )
+                        }
+                        case GOOGLE_SCRIPT_MIME_TYPE: {
+                            return exportToFileWithBackoffAndRetry(
+                                auth, f.id, `${localFilename}.json`, 'application/vnd.google-apps.script+json'
+                            )
+                        }
+                        default: {
+                            return downloadToFileWithBackoffAndRetry(auth, f.id, localFilename)
+                        }
                     }
-                    case GOOGLE_DOC_MIME_TYPE: {
-                        return exportToFile(
-                            auth, 
-                            f.id, 
-                            `${correspondingFilename}.odt`, 
-                            'application/vnd.oasis.opendocument.text'
-                        )
-                    }
-                    case GOOGLE_SPREADSHEET_MIME_TYPE: {
-                        return exportToFile(
-                            auth, 
-                            f.id, 
-                            `${correspondingFilename}.ods`, 
-                            'application/x-vnd.oasis.opendocument.spreadsheet'
-                        )
-                    }
-                    default: {
-                        return downloadToFile(auth, f.id, correspondingFilename)
-                    }
-                }
+                })()
+                .then(ret => {
+                    console.log('End', f.name, dirPath);
+                    return ret;
+                })
+                .catch(e => {
+                    console.error('Error', f.name, dirPath, e);
+                })
+                
             })
         )
     })
