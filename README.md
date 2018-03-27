@@ -16,3 +16,35 @@ Also, these tools usually don't work on Linux...
 
 * Making a full-featured sync tool
 
+## Install
+
+- [Create a Google Project](https://console.developers.google.com/)
+- Activate the "Google Drive API" for this project
+- Create "web application" credentials allowing `http://localhost/` as redirect URL
+- Download the corresponding JSON file credentials
+
+```sh
+npm i https://github.com/dtc-innovation/garagiste
+cd garagiste
+npm ci
+# Add the credential file with name `client_secret.json` to the directory
+```
+
+
+## Run
+
+(remove any existing `drive-nodejs-quickstart.json` file if any)
+
+```sh
+npm start
+
+## The first time
+# This tells you to go to a page starting with `https://accounts.google.com/o/oauth2/auth`
+# ... which redirects to http://localhost/?code=SOME_CODE
+# Take SOME_CODE and feed it to the command line
+
+## All the time
+# Provide the Google Drive directory id to backup
+```
+
+This will backup the Google Drive directory to a `tmp` directory at the root of this project
