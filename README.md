@@ -24,7 +24,7 @@ Also, these tools usually don't work on Linux...
 - Download the corresponding JSON file credentials
 
 ```sh
-npm i https://github.com/dtc-innovation/garagiste
+git clone git@github.com:dtc-innovation/garagiste.git
 cd garagiste
 npm ci
 # Add the credential file with name `client_secret.json` to the directory
