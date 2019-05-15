@@ -2,9 +2,12 @@
   "name": "car-spare",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "main.mjs",
+  "module": "main.mjs",
+  "bin": "./main.mjs",
+  "type": "module",
   "scripts": {
-    "start": "babel-node main.js",
+    "start": "node --experimental-modules main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,24 +21,15 @@
     "url": "https://github.com/DavidBruant/car-spare/issues"
   },
   "homepage": "https://github.com/DavidBruant/car-spare#readme",
-  "babel": {
-    "presets": [
-      [
-        "env", 
-        {
-          "targets": {
-            "node": "current"
-          }
-        }
-      ]
-    ]
+  "engines": {
+    "node": ">12.0.0"
+  },
+  "esm": {
+    "mode": "all"
   },
   "dependencies": {
     "google-auth-library": "^0.10.0",
     "googleapis": "^20.1.0"
   },
-  "devDependencies": {
-    "babel-cli": "^6.24.1",
-    "babel-preset-env": "^1.6.0"
-  }
+  "devDependencies": {}
 }

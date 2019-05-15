@@ -21,22 +21,14 @@ Also, these tools usually don't work on Linux...
 - [Create a Google Project](https://console.developers.google.com/)
 - Activate the "Google Drive API" for this project
 - Create "web application" credentials allowing `http://localhost/` as redirect URL
-- Download the corresponding JSON file credentials
-
-```sh
-git clone git@github.com:dtc-innovation/garagiste.git
-cd garagiste
-npm ci
-# Add the credential file with name `client_secret.json` to the directory
-```
-
+- Download the corresponding JSON file credentials and rename it as `client_secret.json`
 
 ## Run
 
 (remove any existing `drive-nodejs-quickstart.json` file if any)
 
 ```sh
-npm start
+npx github:dtc-innovation/garagiste
 
 ## The first time
 # This tells you to go to a page starting with `https://accounts.google.com/o/oauth2/auth`

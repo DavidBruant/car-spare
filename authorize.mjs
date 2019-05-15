@@ -4,7 +4,7 @@ import {promisify} from 'util';
 
 import googleAuth from 'google-auth-library';
 
-const readFile = promisify(fs.readFile);
+const {readFile, writeFile} = fs.promises;
 
 
 // If modifying these scopes, delete your previously saved credentials
@@ -43,13 +43,12 @@ function getNewToken(oauth2Client) {
                 }
                 else{
                     oauth2Client.credentials = token;
-                    storeToken(token);
-                    resolve(oauth2Client);
+                    storeToken(token).then(() => resolve(oauth2Client))
                 }
             });
         });
     })
-    
+
 }
 
 
@@ -59,8 +58,8 @@ function getNewToken(oauth2Client) {
  * @param {Object} token The token to store to disk.
  */
 function storeToken(token) {
-    fs.writeFile(TOKEN_PATH, JSON.stringify(token));
     console.log('Token stored to ', TOKEN_PATH);
+    return writeFile(TOKEN_PATH, JSON.stringify(token));
 }
 
 

@@ -4,7 +4,7 @@ import {promisify} from 'util';
 
 import google from 'googleapis';
 
-import withExponentialBackoff from './withExponentialBackoff';
+import withExponentialBackoff from './withExponentialBackoff.mjs';
 
 const GOOGLE_DRIVE_FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
 const GOOGLE_DOC_MIME_TYPE = 'application/vnd.google-apps.document';
@@ -68,7 +68,7 @@ const downloadToFileWithBackoffAndRetry = withExponentialBackoff(downloadToFile)
 
 export default function makeGDriveFolderBackup(auth, gDriveFolderId, dirPath = './tmp'){
     // verify the dir exists
-    // verify it's a git repo; make it so if not https://github.com/dtc-innovation/garagiste/issues/3 
+    // verify it's a git repo; make it so if not https://github.com/dtc-innovation/garagiste/issues/3
 
     return listFolderFilesWithBackoffAndRetry(auth, gDriveFolderId)
     .then(({files}) => {
@@ -76,7 +76,7 @@ export default function makeGDriveFolderBackup(auth, gDriveFolderId, dirPath = '
             files.map(f => {
 
                 const localFilename = path.join(
-                    dirPath, 
+                    dirPath,
                     f.name.replace(new RegExp(path.sep, 'g'), '_')
                 )
 
@@ -85,7 +85,7 @@ export default function makeGDriveFolderBackup(auth, gDriveFolderId, dirPath = '
                 (() => {
                     switch(f.mimeType){
                         case GOOGLE_DRIVE_FOLDER_MIME_TYPE: {
-                            return mkdir(localFilename)
+                            return mkdir(localFilename, {recursive: true})
                             .then(() => makeGDriveFolderBackup(auth, f.id, localFilename) )
                         }
                         case GOOGLE_DOC_MIME_TYPE: {
@@ -125,10 +125,10 @@ export default function makeGDriveFolderBackup(auth, gDriveFolderId, dirPath = '
                 .catch(e => {
                     console.error('Error', f.name, dirPath, e);
                 })
-                
+
             })
         )
     })
 
-    
+
 }

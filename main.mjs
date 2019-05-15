@@ -1,9 +1,12 @@
+#!/bin/sh
+":" //# comment; exec /usr/bin/env node --experimental-modules "$0" "$@"
+
 import fs from 'fs';
 import readline from 'readline';
 import {promisify} from 'util';
 
-import authorize from './authorize';
-import makeGDriveFolderBackup from './makeGDriveFolderBackup';
+import authorize from './authorize.mjs';
+import makeGDriveFolderBackup from './makeGDriveFolderBackup.mjs';
 
 const readFile = promisify(fs.readFile);
 
@@ -27,7 +30,5 @@ readFile('client_secret.json')
     })
 
 })
-.then(() => {
-    console.timeEnd('yo');
-})
-.catch(err => console.error(err));
+.then(() => console.timeEnd('yo'))
+.catch(err => console.error(err))
